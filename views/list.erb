@@ -1,0 +1,29 @@
+
+<%=@resultArray%> <h1>Array before change</h1>
+
+<!-- fix title for URL -->
+<% @resultArray.each do |movieObject|
+		ammendedTitle = movieObject["Title"].dup
+		if ammendedTitle.include? " "
+			ammendedTitle = ammendedTitle.gsub!(" ", "+")
+		end
+		if ammendedTitle.include? "'"
+			ammendedTitle = ammendedTitle.gsub!("'", "%27")
+		end 
+		movieObject["URLtitle"] = ammendedTitle
+	end 
+		%>
+
+	<%=@resultArray%>
+
+<h1>Titles Related to "<%=@search%>"</h1>
+
+<ul>
+<%	@resultArray.each do |movie| %>
+	<a href="/about?titleSearch=<%movie["URLtitle"]%>"><li> <%= movie["Title"] %> </li></a>
+
+ <% end %>
+
+</ul>
+
+
