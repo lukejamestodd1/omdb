@@ -1,6 +1,3 @@
-
-<%=@resultArray%> <h1>Array before change</h1>
-
 <!-- fix title for URL -->
 <% @resultArray.each do |movieObject|
 		ammendedTitle = movieObject["Title"].dup
@@ -14,16 +11,24 @@
 	end 
 		%>
 
-	<%=@resultArray%>
+<h1><%= params[:titleBrowse] %></h1>
+
+
 
 <h1>Titles Related to "<%=@search%>"</h1>
 
 <ul>
 <%	@resultArray.each do |movie| %>
-	<a href="/about?titleSearch=<%movie["URLtitle"]%>"><li> <%= movie["Title"] %> </li></a>
-
+	
+	<a href="/about/<%= movie["imdbID"] %>">
+		<li name="titleSearch"> <%= movie["Title"] %> </li>
+	</a>
  <% end %>
 
 </ul>
 
+	<%=@resultArray%>
+<!-- generates dynamic url but about/ page not working like this at the moment
 
+	ID NUMBER
+ -->

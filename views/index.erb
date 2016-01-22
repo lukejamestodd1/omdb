@@ -1,35 +1,13 @@
-// <script>
-//DOESN'T WORK
-// var fixString = function(string){
-// 	for (var i = 0; i < string.length; i++){
-// 		if (string[i] == ' '){
-// 			string[i] = '+';
-// 		}
-// 	}
-// 	return string;
-// }
-// </script>
+<h2>MOVIE SEARCH</h2>
+<h3>Enter exact title to search</h3>
+<h3>Or browse a list of related titles</h3>
 
-
-<h2>MOVIE SEARCH ENGINE</h2>
-<h3>Enter movie title and search or browse:</h3>
-
-<!-- take to /about page after clicking button -->
-<form action="/about">
-	<!-- text is captured and turned into titleSearch variable -->
-	<input type="text" name="titleSearch">
-	<!-- when button is pressed -->
-	<button onclick="fixString(titleSearch)">Search</button>
+<form action="/title">
+	<input type="text" name="titleSearch"=>
+	<button>Search</button>
 </form>
 
 <form action="/list">
 	<input type="text" name="titleBrowse">
-	<!-- takes user to list page on button click -->
-	<button onclick="fixString(titleBrowse)">Browse</button>
+	<button>Browse</button>
 </form>
-
-<!-- # how to search for two worded titles: run a script from here, before the variable titleSearch is passed on
-	title = params[:titleSearch].to_s
-	if title.include?('+')
-		title = title.gsub('+', '-')
-	end -->

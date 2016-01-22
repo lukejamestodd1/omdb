@@ -2,52 +2,281 @@ require 'sinatra'
 require 'sinatra/reloader'
 require 'httparty'
 require 'pry'
+require 'pg'
 
-#Home page
+require './db_config'
+require './models/movie'
+
+
+#TO RUN SQL
+def run_sql(sql)
+  db = PG.connect(dbname: 'moviesdatabase')
+  results = db.exec(sql)
+  db.close
+  return results
+end 
+
+
+#HOME
 get '/' do 
 	erb(:index)
 end
 
-get '/about/:titleSearch' do
-# get '/about' do
-	result = HTTParty.get("http://www.omdbapi.com/?t=#{params[:titleSearch]}")
-	@movie_title = result["Title"]
-	@movie_year = result["Year"]
-	@movie_stars = result["Actors"].to_s
-	@movie_posterURL = result["Poster"].to_s
-	@movie_plot = result["Plot"]
-	erb :about
+#show list of movies stored locally
+get '/stored' do
+  sql = "SELECT * FROM movies;"
+  @movies = run_sql(sql)
+  erb :stored
 end
 
- #for dynamic urls
-get'/about' do
-	search = params[:titleSearch]
-	 if search.include? " "
+
+#TITLE SEARCH - RETURN ONE RESULT (t)
+get'/title' do
+
+  #first check whether object with same name in the database. in not, search OMDB. If so use local DB info
+
+  #fix the title search spaces etc are ok
+  search = params[:titleSearch]
+  if search.include? " "
     search.gsub!(" ","+")
   end
   if search.include? "'"
     search.gsub!("'","%27")
   end
 
-	redirect to "/about/#{params[:titleSearch]}"
+
+  @result = HTTParty.get("http://www.omdbapi.com/?t=#{search}")
+  @movie_title = @result["Title"]
+  @movie_year = @result["Year"]
+  @movie_stars = @result["Actors"].to_s
+  @movie_posterURL = @result["Poster"].to_s
+  @movie_plot = @result["Plot"]
+
+  # generate sql send to the database
+
+  @keyArray = []
+    @valueArray = []
+
+    @result.each do |key, value| 
+      @keyArray.push(key.to_s)
+      @valueArray.push(value.to_s)
+    end
+
+    #PLOT does't store - too long
+  sql = "INSERT INTO movies(
+  title, 
+  year, 
+  rated, 
+  released, 
+  runtime, 
+  genre, 
+  director, 
+  writer, 
+  actors, 
+   
+  language, 
+  country, 
+  awards, 
+  poster, 
+  metascore, 
+  imdbRating, 
+  imdbVotes, 
+  imdbID, 
+  type, 
+  response) VALUES (
+  '#{@valueArray[0]}',
+  '#{@valueArray[1]}',
+  '#{@valueArray[2]}',
+  '#{@valueArray[3]}',
+  '#{@valueArray[4]}',
+  '#{@valueArray[5]}',
+  '#{@valueArray[6]}',
+  '#{@valueArray[7]}',
+  '#{@valueArray[8]}',
+ 
+  '#{@valueArray[10]}',
+  '#{@valueArray[11]}',
+  '#{@valueArray[12]}',
+  '#{@valueArray[13]}',
+  '#{@valueArray[14]}',
+  '#{@valueArray[15]}',
+  '#{@valueArray[16]}',
+  '#{@valueArray[17]}',
+  '#{@valueArray[18]}',
+  '#{@valueArray[19]}'
+   );"
+
+  run_sql(sql)
+  
+  erb :title
 end 
 
-## ====================for Browse functionality instead of search - use s not t
-# get'/list/:titleBrowse' do
+
+#BROWSE LIST OF RESULTS (s)
 get'/list' do
-		resultList = HTTParty.get("http://www.omdbapi.com/?s=#{params[:titleBrowse]}")
-
-		@search = params[:titleBrowse]
-		@resultArray = resultList["Search"]
-
-		
-
-	erb :list
+  resultList = HTTParty.get("http://www.omdbapi.com/?s=#{params[:titleBrowse]}")
+  @search = params[:titleBrowse]
+  @resultArray = resultList["Search"]
+  erb :list
 end 
- #=====================
-# get'/list' do
-# 	redirect to "/list/#{ params[:titleBrowse]}"
-# end 
+
+
+#AFTER SELECTING RESULT, search by imdbID (i)
+
+#first check whether object with same name in the database. in not, search OMDB. If so use local DB info
+
+get '/about/:titleSearch' do
+
+  sql = "SELECT * FROM movies"
+  @movies = run_sql(sql)
+  @movies.each do |movie|
+    if movie['imdbID'] == params[:titleSearch]
+      @result = movie
+      @movie_title = @result["title"]
+      @movie_year = @result["year"]
+      @movie_stars = @result["actors"].to_s
+      @movie_posterURL = @result["poster"].to_s
+  
+      erb :about
+    end
+  end
+
+	@result = HTTParty.get("http://www.omdbapi.com/?i=#{params[:titleSearch]}")
+	@movie_title = @result["Title"]
+	@movie_year = @result["Year"]
+	@movie_stars = @result["Actors"].to_s
+	@movie_posterURL = @result["Poster"].to_s
+	@movie_plot = @result["Plot"]
+
+  # generate sql send to the database
+  @keyArray = []
+    @valueArray = []
+
+    @result.each do |key, value| 
+      @keyArray.push(key.to_s)
+      @valueArray.push(value.to_s)
+    end
+
+  #PLOT does't store - too long
+  sql = "INSERT INTO movies(
+  title, 
+  year, 
+  rated, 
+  released, 
+  runtime, 
+  genre, 
+  director, 
+  writer, 
+  actors, 
+   
+  language, 
+  country, 
+  awards, 
+  poster, 
+  metascore, 
+  imdbRating, 
+  imdbVotes, 
+  imdbID, 
+  type, 
+  response) VALUES (
+  '#{@valueArray[0]}',
+  '#{@valueArray[1]}',
+  '#{@valueArray[2]}',
+  '#{@valueArray[3]}',
+  '#{@valueArray[4]}',
+  '#{@valueArray[5]}',
+  '#{@valueArray[6]}',
+  '#{@valueArray[7]}',
+  '#{@valueArray[8]}',
+ 
+  '#{@valueArray[10]}',
+  '#{@valueArray[11]}',
+  '#{@valueArray[12]}',
+  '#{@valueArray[13]}',
+  '#{@valueArray[14]}',
+  '#{@valueArray[15]}',
+  '#{@valueArray[16]}',
+  '#{@valueArray[17]}',
+  '#{@valueArray[18]}',
+  '#{@valueArray[19]}'
+   );"
+
+  run_sql(sql)
+
+	erb :about
+end
+
+
+# create a movie record in local DB
+post '/title/save' do
+    
+    @result = HTTParty.get("http://www.omdbapi.com/?i=#{params[:titleSearch]}")
+
+    #make arrays for properties and values for SQL
+    @keyArray = []
+    @valueArray = []
+
+    @result.each do |key, value| 
+      @keyArray.push(key.to_s)
+      @valueArray.push(value.to_s)
+    end
+
+  sql = "INSERT INTO movies(
+  title, 
+  year, 
+  rated, 
+  released, 
+  runtime, 
+  genre, 
+  director, 
+  writer, 
+  actors, 
+  plot, 
+  language, 
+  country, 
+  awards, 
+  poster, 
+  metascore, 
+  imdbRating, 
+  imdbVotes, 
+  imdbID, 
+  type, 
+  response) VALUES (
+  '#{@valueArray[0]}',
+  '#{@valueArray[1]}',
+  '#{@valueArray[2]}',
+  '#{@valueArray[3]}',
+  '#{@valueArray[4]}',
+  '#{@valueArray[5]}',
+  '#{@valueArray[6]}',
+  '#{@valueArray[7]}',
+  '#{@valueArray[8]}',
+  '#{@valueArray[9]}',
+  '#{@valueArray[10]}',
+  '#{@valueArray[11]}',
+  '#{@valueArray[12]}',
+  '#{@valueArray[13]}',
+  '#{@valueArray[14]}',
+  '#{@valueArray[15]}',
+  '#{@valueArray[16]}',
+  '#{@valueArray[17]}',
+  '#{@valueArray[18]}',
+  '#{@valueArray[19]}'
+   );"
+
+  raise sql 
+
+  run_sql(sql)
+  redirect to '/'
+end
+
+delete '/movie/:id' do
+  sql = "DELETE FROM movies WHERE imdbID = #{params[:imdbID] };"
+  run_sql(sql)
+
+  # redirect to home
+  redirect to '/'
+end
 
 
 =begin

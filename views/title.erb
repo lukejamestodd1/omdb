@@ -18,13 +18,13 @@
 
 <p><%= @result %></p>
 
+<form action="/title/save" method="post" value="<%= params[:titleSearch] %>">
+	<button name="store">STORE</button></form>
 
-<form action="/list/?:titleBrowse<%= 
+<%	
 
-#BACK TO RESULTS BUTTON NOT WORKING
-params[:titleBrowse] %>">
-	<button>back to results</button>
-</form>
 
-<form action="/title/save" method="post">
-		<button name="store">STORE</button></form>
+
+
+
+%>

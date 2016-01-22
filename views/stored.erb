@@ -1,0 +1,20 @@
+<ul>
+	<% @movies.each do |movie| %>
+	<li><a href="/about/=?<%= movie['imdbID'].to_s %>" value="<% movie %>"><%= movie['title'] %></a></li>
+
+
+	 
+
+
+	<% end %>
+
+</ul>
+		
+		
+ 
+
+
+
+
+<%= @movies %>
+
